@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template to create ECR repositories for BetterWellness microservices.
+
+Resources:
+  UserServiceRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: user-service
+      ImageScanningConfiguration:
+        scanOnPush: true
+      Tags:
+        - Key: Name
+          Value: user-service
+
+  BookingServiceRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: booking-service
+      ImageScanningConfiguration:
+        scanOnPush: true
+      Tags:
+        - Key: Name
+          Value: booking-service
+
+  MessagesServiceRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: messaging-service
+      ImageScanningConfiguration:
+        scanOnPush: true
+      Tags:
+        - Key: Name
+          Value: messaging-service
