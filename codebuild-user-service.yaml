@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild project for user-service microservice
+
+Parameters:
+  GitHubRepoUrl:
+    Type: String
+    Description: https://github.com/Prabhashi-Sharlyn/user-service
+  BranchName:
+    Type: String
+    Default: automation
+    Description: automation
+
+Resources:
+  UserServiceCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: betterwellness-user-codebuild-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildAccessSSMECRK8s
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: arn:aws:ssm:*:*:parameter/betterwellness/frontend/url
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                  - sts:GetServiceBearerToken
+                  - eks:DescribeCluster
+                  - eks:ListClusters
+                  - eks:AccessKubernetesApi
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                  - cloudwatch:*
+                  - codebuild:*
+                Resource: "*"
+
+  UserServiceCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: betterwellness-user-service-build
+      Source:
+        Type: GITHUB
+        Location: !Ref https://github.com/Prabhashi-Sharlyn/user-service
+        GitCloneDepth: 1
+        BuildSpec: buildspec.yml
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPO_NAME
+            Value: user-service
+          - Name: REGION
+            Value: ap-south-1
+          - Name: CLUSTER_NAME
+            Value: betterwellness-cluster
+      ServiceRole: !GetAtt UserServiceCodeBuildRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+              ExcludeMatchedPattern: false
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/!Ref BranchName$
