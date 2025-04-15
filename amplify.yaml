@@ -1,0 +1,34 @@
+Resources:
+  AmplifyApp:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: betterwellness-fe
+      Repository: https://github.com/Prabhashi-Sharlyn/betterwellness-app
+      AccessToken: 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
+      BuildSpec: |
+        version: 1
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - npm install
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            baseDirectory: build
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+
+      EnvironmentVariables:
+        - Name: REACT_APP_GATEWAY_API_URL
+          Value: https://8e1cfmltvc.execute-api.ap-south-1.amazonaws.com
+
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      BranchName: automation
