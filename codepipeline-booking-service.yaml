@@ -17,7 +17,7 @@ Parameters:
     Description: "IAM Role ARN for CodePipeline"
   FrontendURL:
     Type: String
-    Description: "Frontend URL to pass into the build process"
+    Description: Frontend URL to pass into the build process
 
 Resources:
   BookingServiceCodeBuildProject:
@@ -51,7 +51,7 @@ Resources:
       RoleArn: !Ref CodePipelineServiceRoleArn
       ArtifactStore:
         Type: S3
-        Location: !Sub "booking-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"  # Updated to your desired bucket name
+        Location: user-service-pipeline-artifacts-147997140755-ap-south-1  # Referencing the existing user-service bucket
       Stages:
         - Name: Source
           Actions:
@@ -82,8 +82,3 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref BookingServiceCodeBuildProject
-
-  CodePipelineArtifactBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "booking-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"
