@@ -15,6 +15,9 @@ Parameters:
   CodePipelineServiceRoleArn:
     Type: String
     Description: "IAM Role ARN for CodePipeline"
+  FrontendURL:
+    Type: String
+    Description: Frontend URL to pass into the build process
 
 Resources:
   UserServiceCodeBuildProject:
@@ -35,6 +38,8 @@ Resources:
             Value: ap-south-1
           - Name: CLUSTER_NAME
             Value: betterwellness-cluster
+          - Name: FRONTEND_URL
+            Value: !Ref FrontendURL
       ServiceRole: !Ref CodeBuildServiceRoleArn
       Artifacts:
         Type: CODEPIPELINE
@@ -77,19 +82,6 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref UserServiceCodeBuildProject
-        - Name: Deploy
-          Actions:
-            - Name: Deploy
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CodeDeploy
-                Version: 1
-              InputArtifacts:
-                - Name: BuildOutput
-              Configuration:
-                ApplicationName: user-service-app
-                DeploymentGroupName: user-service-deployment-group
 
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
