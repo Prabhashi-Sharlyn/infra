@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodePipeline for booking-service microservice
+
+Parameters:
+  GitHubRepoUrl:
+    Type: String
+    Description: "GitHub repo URL (not used directly here, but good for context)"
+  BranchName:
+    Type: String
+    Default: automation
+    Description: "GitHub branch name"
+  CodeBuildServiceRoleArn:
+    Type: String
+    Description: "IAM Role ARN for CodeBuild Project"
+  CodePipelineServiceRoleArn:
+    Type: String
+    Description: "IAM Role ARN for CodePipeline"
+  FrontendURL:
+    Type: String
+    Description: "Frontend URL to pass into the build process"
+
+Resources:
+  BookingServiceCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: betterwellness-booking-service-build
+      Source:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPO_NAME
+            Value: booking-service
+          - Name: REGION
+            Value: ap-south-1
+          - Name: CLUSTER_NAME
+            Value: betterwellness-cluster
+          - Name: FRONTEND_URL
+            Value: !Ref FrontendURL
+      ServiceRole: !Ref CodeBuildServiceRoleArn
+      Artifacts:
+        Type: CODEPIPELINE
+
+  BookingServicePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: betterwellness-booking-service-pipeline
+      RoleArn: !Ref CodePipelineServiceRoleArn
+      ArtifactStore:
+        Type: S3
+        Location: !Sub "booking-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"  # Updated to your desired bucket name
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: Prabhashi-Sharlyn
+                Repo: booking-service
+                Branch: !Ref BranchName
+                OAuthToken: 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
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref BookingServiceCodeBuildProject
+
+  CodePipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "booking-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"

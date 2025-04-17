@@ -1,0 +1,65 @@
+Parameters:
+  AmplifyFrontendURL:
+    Type: String
+    Description: Allowed origin for CORS (e.g., https://master.d1ljc285p0j9xk.amplifyapp.com)
+
+  UserServiceELB:
+    Type: String
+    Description: DNS of User Service ELB (without protocol)
+
+  BookingServiceELB:
+    Type: String
+    Description: DNS of Booking Service ELB (without protocol)
+
+Resources:
+  BetterWellnessHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: BetterWellnessAPI
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        AllowOrigins:
+          - !Ref AmplifyFrontendURL
+        AllowHeaders: ["content-type"]
+        ExposeHeaders: ["*"]
+        AllowCredentials: true
+
+  UserServiceIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref BetterWellnessHttpApi
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      IntegrationUri: !Sub "http://${UserServiceELB}/api/users/{proxy}"
+      PayloadFormatVersion: "1.0"
+
+  BookingServiceIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref BetterWellnessHttpApi
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      IntegrationUri: !Sub "http://${BookingServiceELB}/api/bookings/{proxy}"
+      PayloadFormatVersion: "1.0"
+
+  UserRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref BetterWellnessHttpApi
+      RouteKey: "ANY /users/{proxy+}"
+      Target: !Sub "integrations/${UserServiceIntegration}"
+
+  BookingRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref BetterWellnessHttpApi
+      RouteKey: "ANY /booking/{proxy+}"
+      Target: !Sub "integrations/${BookingServiceIntegration}"
+
+  ApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref BetterWellnessHttpApi
+      StageName: prod
+      AutoDeploy: true
