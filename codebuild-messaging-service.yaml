@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild project for messaging-service microservice
+
+Parameters:
+  GitHubRepoUrl:
+    Type: String
+    Description: GitHub repository URL of the user-service (e.g., https://github.com/YourName/user-service)
+  BranchName:
+    Type: String
+    Default: main
+    Description: GitHub branch to build from
+  CodeBuildServiceRoleArn:
+    Type: String
+    Description: ARN of the pre-created CodeBuild service role (e.g., arn:aws:iam::<account-id>:role/betterwellness-user-codebuild-role)
+
+Resources:
+  MessagingServiceCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: betterwellness-messaging-service-build
+      Source:
+        Type: GITHUB
+        Location: !Ref GitHubRepoUrl
+        GitCloneDepth: 1
+        BuildSpec: buildspec.yml
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPO_NAME
+            Value: messaging-service
+          - Name: REGION
+            Value: ap-south-1
+          - Name: CLUSTER_NAME
+            Value: betterwellness-cluster
+      ServiceRole: !Ref CodeBuildServiceRoleArn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+              ExcludeMatchedPattern: false
+            - Type: HEAD_REF
+              Pattern: !Sub "^refs/heads/${BranchName}$"
