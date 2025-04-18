@@ -1,9 +1,11 @@
 #!/bin/bash
 
+set -e
+
 # Set variables
 REGION="ap-south-1"
 CLUSTER_NAME="betterwellness-cluster"
-INGRESS_NAME="messaging-service-ingress"
+INGRESS_NAME="messaging-ingress"
 
 # Get the ALB ARN
 echo "Getting ALB from ingress $INGRESS_NAME..."

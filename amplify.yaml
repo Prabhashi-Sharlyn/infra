@@ -1,10 +1,16 @@
+Parameters:
+  GitHubAccessToken:
+    Type: String
+    NoEcho: true
+    Description: GitHub Access Token for Amplify (stored securely)
+
 Resources:
   AmplifyApp:
     Type: AWS::Amplify::App
     Properties:
       Name: betterwellness-fe
       Repository: https://github.com/Prabhashi-Sharlyn/betterwellness-app
-      AccessToken: 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
+      AccessToken: !Ref GitHubAccessToken
       BuildSpec: |
         version: 1
         frontend:

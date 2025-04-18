@@ -18,6 +18,10 @@ Parameters:
   FrontendURL:
     Type: String
     Description: Frontend URL to pass into the build process
+  GitHubOAuthToken:
+    Type: String
+    NoEcho: true
+    Description: GitHub OAuth Token
 
 Resources:
   UserServiceCodeBuildProject:
@@ -67,7 +71,7 @@ Resources:
                 Owner: Prabhashi-Sharlyn
                 Repo: user-service
                 Branch: !Ref BranchName
-                OAuthToken: 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
+                OAuthToken: !Ref GitHubOAuthToken
         - Name: Build
           Actions:
             - Name: Build
